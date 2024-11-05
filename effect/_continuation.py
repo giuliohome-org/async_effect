@@ -5,7 +5,7 @@ class Bouncer(object):
     work = None
     _asynchronous = False
 
-    def bounce(self, func, *args, **kwargs):
+    async def bounce(self, func, *args, **kwargs):
         """
         Bounce a function off the trampoline -- in other words, signal to the
         trampoline that the given function should be run. It will be passed a
@@ -23,11 +23,11 @@ class Bouncer(object):
             )
         self.work = (func, args, kwargs)
         if self._asynchronous:
-            trampoline(func, *args, **kwargs)
+            await trampoline(func, *args, **kwargs)
             return
 
 
-def trampoline(f, *args, **kwargs):
+async def trampoline(f, *args, **kwargs):
     """
     An asynchronous trampoline.
 
@@ -54,7 +54,7 @@ def trampoline(f, *args, **kwargs):
     """
     while True:
         bouncer = Bouncer()
-        f(bouncer, *args, **kwargs)
+        await f(bouncer, *args, **kwargs)
         if bouncer.work is not None:
             f, args, kwargs = bouncer.work
         else:

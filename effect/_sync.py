@@ -12,7 +12,7 @@ class NotSynchronousError(Exception):
     """Performing an effect did not immediately return a value."""
 
 
-def sync_perform(dispatcher, effect):
+async def async_perform(dispatcher, effect):
     """
     Perform an effect, and return its ultimate result. If the final result is
     an error, the exception will be raised.
@@ -24,7 +24,7 @@ def sync_perform(dispatcher, effect):
     successes = []
     errors = []
     effect = effect.on(success=successes.append, error=errors.append)
-    perform(dispatcher, effect)
+    await perform(dispatcher, effect)
     if successes:
         return successes[0]
     elif errors:

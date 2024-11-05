@@ -47,11 +47,11 @@ class _Box(object):
         """
         self._cont = cont
 
-    def succeed(self, result):
+    async def succeed(self, result):
         """
         Indicate that the effect has succeeded, and the result is available.
         """
-        self._cont((False, result))
+        await self._cont((False, result))
 
     def fail(self, result):
         """
@@ -77,7 +77,7 @@ class NoPerformerFoundError(Exception):
     """Raised when a performer for an intent couldn't be found."""
 
 
-def perform(dispatcher, effect):
+async def perform(dispatcher, effect):
     """
     Perform an effect and invoke callbacks bound to it. You probably don't want
     to use this. Instead, use :func:`sync_perform` (or, if you're using
@@ -120,11 +120,11 @@ def perform(dispatcher, effect):
        an exception. Decorators like :func:`sync_performer` simply abstract this away.
     """
 
-    def _run_callbacks(bouncer, chain, result):
+    async def _run_callbacks(bouncer, chain, result):
         is_error, value = result
 
         if type(value) is Effect:
-            bouncer.bounce(
+            await bouncer.bounce(
                 _perform, Effect(value.intent, callbacks=value.callbacks + chain)
             )
             return
@@ -136,15 +136,15 @@ def perform(dispatcher, effect):
         if cb is not None:
             result = guard(cb, value)
         chain = chain[1:]
-        bouncer.bounce(_run_callbacks, chain, result)
+        await bouncer.bounce(_run_callbacks, chain, result)
 
-    def _perform(bouncer, effect):
+    async def _perform(bouncer, effect):
         try:
             performer = dispatcher(effect.intent)
             if performer is None:
                 raise NoPerformerFoundError(effect.intent)
             else:
-                performer(
+                await performer(
                     dispatcher,
                     effect.intent,
                     _Box(partial(bouncer.bounce, _run_callbacks, effect.callbacks)),
@@ -152,7 +152,7 @@ def perform(dispatcher, effect):
         except Exception as e:
             _run_callbacks(bouncer, effect.callbacks, (True, e))
 
-    trampoline(_perform, effect)
+    await trampoline(_perform, effect)
 
 
 def catch(exc_type, callable):
@@ -163,7 +163,7 @@ def catch(exc_type, callable):
                            lambda exc: "got an error!"))
 
     If any exception other than a ``SpecificException`` is thrown, it will be
-    ignored by this handler and propagate further down the chain of callbacks.
+    ignored by this handler and propogate further down the chain of callbacks.
     """
 
     def catcher(error):
