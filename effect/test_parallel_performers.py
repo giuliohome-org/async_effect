@@ -21,7 +21,7 @@ class ParallelPerformerTestsMixin(object):
     def test_empty(self):
         """
         When given an empty list of effects, ``perform_parallel_async`` returns
-        an empty list synchronously.
+        an empty list synchronusly.
         """
         result = sync_perform(self.dispatcher, parallel([]))
         self.assertEqual(result, [])
